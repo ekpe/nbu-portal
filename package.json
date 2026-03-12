@@ -4,14 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write ."
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
-    "@prisma/client": "^6.15.0",
+    "@prisma/client": "6.15.0",
     "argon2": "^0.44.0",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
@@ -27,7 +28,7 @@
     "eslint-config-next": "16.1.6",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.8.1",
-    "prisma": "^6.15.0",
+    "prisma": "6.15.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"

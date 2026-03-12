@@ -3,7 +3,7 @@
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
 
-export async function loginAction(formData: FormData) {
+export async function loginAction(formData: FormData): Promise<void> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
@@ -13,14 +13,9 @@ export async function loginAction(formData: FormData) {
       password,
       redirectTo: "/dashboard",
     });
-
-    return { success: true };
   } catch (error) {
     if (error instanceof AuthError) {
-      return {
-        success: false,
-        message: "Invalid email or password.",
-      };
+      throw new Error("Invalid email or password.");
     }
 
     throw error;
