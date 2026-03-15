@@ -21,6 +21,122 @@ async function main() {
     });
   }
 
+  const fcit = await prisma.faculty.upsert({
+    where: { code: "FCIT" },
+    update: {},
+    create: {
+      code: "FCIT",
+      name: "Faculty of Computing and Information Technology",
+      isActive: true,
+    },
+  });
+
+  const csDept = await prisma.department.upsert({
+    where: { code: "CSC" },
+    update: {},
+    create: {
+      code: "CSC",
+      name: "Computer Science",
+      facultyId: fcit.id,
+      isActive: true,
+    },
+  });
+
+  const seDept = await prisma.department.upsert({
+    where: { code: "SWE" },
+    update: {},
+    create: {
+      code: "SWE",
+      name: "Software Engineering",
+      facultyId: fcit.id,
+      isActive: true,
+    },
+  });
+
+  const csProgramme = await prisma.programme.upsert({
+    where: { code: "BSC-CS" },
+    update: {},
+    create: {
+      code: "BSC-CS",
+      name: "BSc Computer Science",
+      facultyId: fcit.id,
+      departmentId: csDept.id,
+      durationYears: 4,
+      isActive: true,
+    },
+  });
+
+  await prisma.programme.upsert({
+    where: { code: "BSC-SWE" },
+    update: {},
+    create: {
+      code: "BSC-SWE",
+      name: "BSc Software Engineering",
+      facultyId: fcit.id,
+      departmentId: seDept.id,
+      durationYears: 4,
+      isActive: true,
+    },
+  });
+
+  const levels = [
+    { code: "100", name: "100 Level", numericValue: 100 },
+    { code: "200", name: "200 Level", numericValue: 200 },
+    { code: "300", name: "300 Level", numericValue: 300 },
+    { code: "400", name: "400 Level", numericValue: 400 },
+  ];
+
+  for (const level of levels) {
+    await prisma.level.upsert({
+      where: { code: level.code },
+      update: level,
+      create: level,
+    });
+  }
+
+  await prisma.academicSession.upsert({
+    where: { name: "2025/2026" },
+    update: {
+      isActive: true,
+      isCurrent: true,
+    },
+    create: {
+      name: "2025/2026",
+      isActive: true,
+      isCurrent: true,
+    },
+  });
+
+  await prisma.semester.upsert({
+    where: { code: "FIRST" },
+    update: {
+      name: "First Semester",
+      isActive: true,
+      isCurrent: true,
+    },
+    create: {
+      code: "FIRST",
+      name: "First Semester",
+      isActive: true,
+      isCurrent: true,
+    },
+  });
+
+  await prisma.semester.upsert({
+    where: { code: "SECOND" },
+    update: {
+      name: "Second Semester",
+      isActive: true,
+      isCurrent: false,
+    },
+    create: {
+      code: "SECOND",
+      name: "Second Semester",
+      isActive: true,
+      isCurrent: false,
+    },
+  });
+
   const passwordHash = await argon2.hash("Password123!");
 
   const admin = await prisma.user.upsert({
@@ -110,6 +226,38 @@ async function main() {
     create: {
       userId: student.id,
       roleId: studentRole.id,
+    },
+  });
+
+  await prisma.staffProfile.upsert({
+    where: { userId: lecturer.id },
+    update: {},
+    create: {
+      userId: lecturer.id,
+      staffNumber: "STF001",
+      title: "Mr.",
+      departmentId: csDept.id,
+      facultyId: fcit.id,
+      employmentStatus: "ACTIVE",
+    },
+  });
+
+  const level100 = await prisma.level.findUniqueOrThrow({
+    where: { code: "100" },
+  });
+
+  await prisma.studentProfile.upsert({
+    where: { userId: student.id },
+    update: {},
+    create: {
+      userId: student.id,
+      matricNumber: "NBU/25/0001",
+      admissionYear: 2025,
+      currentLevelId: level100.id,
+      currentProgrammeId: csProgramme.id,
+      currentDepartmentId: csDept.id,
+      currentFacultyId: fcit.id,
+      status: "ACTIVE",
     },
   });
 }

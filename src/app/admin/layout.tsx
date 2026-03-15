@@ -1,5 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { AdminSidebar } from "@/components/layout/admin-sidebar";
+import { AppHeader } from "@/components/layout/app-header";
 
 export default async function AdminLayout({
   children,
@@ -16,5 +18,13 @@ export default async function AdminLayout({
     redirect("/dashboard");
   }
 
-  return <div>{children}</div>;
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <AppHeader />
+      <div className="flex">
+        <AdminSidebar />
+        <main className="flex-1 p-6">{children}</main>
+      </div>
+    </div>
+  );
 }

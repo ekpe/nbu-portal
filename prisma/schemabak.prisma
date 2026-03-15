@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleCode {
+  SUPER_ADMIN
+  DEAN
+  HOD
+  COURSE_ADVISER
+  LECTURER
+  STUDENT
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  middleName   String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  roles          UserRole[]
+  studentProfile StudentProfile?
+  staffProfile   StaffProfile?
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  code        RoleCode @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users UserRole[]
+}
+
+model UserRole {
+  id               String   @id @default(cuid())
+  userId           String
+  roleId           String
+  isActive         Boolean  @default(true)
+  assignedAt       DateTime @default(now())
+  assignedByUserId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model Faculty {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  departments     Department[]
+  staffProfiles   StaffProfile[]
+  studentProfiles StudentProfile[]
+  Programme       Programme[]
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  facultyId   String
+  code        String   @unique
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+
+  programmes      Programme[]
+  staffProfiles   StaffProfile[]
+  studentProfiles StudentProfile[]
+
+  @@index([facultyId])
+}
+
+model Programme {
+  id            String   @id @default(cuid())
+  departmentId  String
+  facultyId     String
+  code          String   @unique
+  name          String
+  awardType     String?
+  durationYears Int?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  faculty    Faculty    @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+
+  studentProfiles StudentProfile[]
+
+  @@index([departmentId])
+  @@index([facultyId])
+}
+
+model Level {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String
+  numericValue Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  studentProfiles StudentProfile[]
+}
+
+model StudentProfile {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  matricNumber        String   @unique
+  admissionNumber     String?  @unique
+  admissionYear       Int?
+  currentLevelId      String?
+  currentProgrammeId  String?
+  currentDepartmentId String?
+  currentFacultyId    String?
+  status              String   @default("ACTIVE")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  level      Level?      @relation(fields: [currentLevelId], references: [id], onDelete: SetNull)
+  programme  Programme?  @relation(fields: [currentProgrammeId], references: [id], onDelete: SetNull)
+  department Department? @relation(fields: [currentDepartmentId], references: [id], onDelete: SetNull)
+  faculty    Faculty?    @relation(fields: [currentFacultyId], references: [id], onDelete: SetNull)
+
+  @@index([currentLevelId])
+  @@index([currentProgrammeId])
+  @@index([currentDepartmentId])
+  @@index([currentFacultyId])
+}
+
+model StaffProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  staffNumber      String   @unique
+  title            String?
+  qualification    String?
+  rank             String?
+  departmentId     String?
+  facultyId        String?
+  employmentStatus String   @default("ACTIVE")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  faculty    Faculty?    @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+
+  @@index([departmentId])
+  @@index([facultyId])
+}

@@ -62,6 +62,33 @@ model UserRole {
   @@index([roleId])
 }
 
+model AcademicSession {
+  id                String              @id @default(cuid())
+  name              String              @unique
+  startDate         DateTime?
+  endDate           DateTime?
+  isActive          Boolean             @default(true)
+  isCurrent         Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  CourseOffering    CourseOffering[]
+  AdviserAssignment AdviserAssignment[]
+}
+
+model Semester {
+  id                String              @id @default(cuid())
+  code              String              @unique
+  name              String
+  startDate         DateTime?
+  endDate           DateTime?
+  isActive          Boolean             @default(true)
+  isCurrent         Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  CourseOffering    CourseOffering[]
+  AdviserAssignment AdviserAssignment[]
+}
+
 model Faculty {
   id          String   @id @default(cuid())
   code        String   @unique
@@ -71,10 +98,13 @@ model Faculty {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  departments     Department[]
-  staffProfiles   StaffProfile[]
-  studentProfiles StudentProfile[]
-  Programme       Programme[]
+  departments       Department[]
+  staffProfiles     StaffProfile[]
+  studentProfiles   StudentProfile[]
+  programmes        Programme[]
+  Course            Course[]
+  CourseOffering    CourseOffering[]
+  AdviserAssignment AdviserAssignment[]
 }
 
 model Department {
@@ -87,11 +117,13 @@ model Department {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Restrict)
-
-  programmes      Programme[]
-  staffProfiles   StaffProfile[]
-  studentProfiles StudentProfile[]
+  faculty           Faculty             @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  programmes        Programme[]
+  staffProfiles     StaffProfile[]
+  studentProfiles   StudentProfile[]
+  Course            Course[]
+  CourseOffering    CourseOffering[]
+  AdviserAssignment AdviserAssignment[]
 
   @@index([facultyId])
 }
@@ -108,10 +140,12 @@ model Programme {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  faculty    Faculty    @relation(fields: [facultyId], references: [id], onDelete: Restrict)
-
-  studentProfiles StudentProfile[]
+  department        Department          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  faculty           Faculty             @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  studentProfiles   StudentProfile[]
+  Course            Course[]
+  CourseOffering    CourseOffering[]
+  AdviserAssignment AdviserAssignment[]
 
   @@index([departmentId])
   @@index([facultyId])
@@ -126,7 +160,10 @@ model Level {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  studentProfiles StudentProfile[]
+  studentProfiles   StudentProfile[]
+  Course            Course[]
+  CourseOffering    CourseOffering[]
+  AdviserAssignment AdviserAssignment[]
 }
 
 model StudentProfile {
@@ -172,6 +209,139 @@ model StaffProfile {
   department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   faculty    Faculty?    @relation(fields: [facultyId], references: [id], onDelete: SetNull)
 
+  lecturerAssignments CourseAssignment[]  @relation("LecturerAssignments")
+  adviserAssignments  AdviserAssignment[] @relation("AdviserAssignments")
+
   @@index([departmentId])
   @@index([facultyId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  summary    String?
+  beforeJson Json?
+  afterJson  Json?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+model Course {
+  id                  String   @id @default(cuid())
+  courseCode          String   @unique
+  title               String
+  description         String?
+  creditUnits         Int
+  departmentId        String
+  facultyId           String
+  programmeId         String?
+  levelId             String?
+  category            String   @default("CORE")
+  isCarryoverEligible Boolean  @default(true)
+  isElective          Boolean  @default(false)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  faculty    Faculty    @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  programme  Programme? @relation(fields: [programmeId], references: [id], onDelete: SetNull)
+  level      Level?     @relation(fields: [levelId], references: [id], onDelete: SetNull)
+
+  offerings CourseOffering[]
+
+  @@index([departmentId])
+  @@index([facultyId])
+  @@index([programmeId])
+  @@index([levelId])
+}
+
+model CourseOffering {
+  id              String   @id @default(cuid())
+  courseId        String
+  sessionId       String
+  semesterId      String
+  facultyId       String
+  departmentId    String
+  programmeId     String?
+  levelId         String?
+  registrationCap Int?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  course     Course          @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  session    AcademicSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  semester   Semester        @relation(fields: [semesterId], references: [id], onDelete: Restrict)
+  faculty    Faculty         @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  department Department      @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  programme  Programme?      @relation(fields: [programmeId], references: [id], onDelete: SetNull)
+  level      Level?          @relation(fields: [levelId], references: [id], onDelete: SetNull)
+
+  assignments CourseAssignment[]
+
+  @@index([courseId])
+  @@index([sessionId])
+  @@index([semesterId])
+  @@index([facultyId])
+  @@index([departmentId])
+  @@index([programmeId])
+  @@index([levelId])
+}
+
+model CourseAssignment {
+  id                     String   @id @default(cuid())
+  courseOfferingId       String
+  lecturerStaffProfileId String
+  assignedByUserId       String?
+  assignedAt             DateTime @default(now())
+  isPrimary              Boolean  @default(true)
+  isActive               Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  offering CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+  lecturer StaffProfile   @relation("LecturerAssignments", fields: [lecturerStaffProfileId], references: [id], onDelete: Restrict)
+
+  @@index([courseOfferingId])
+  @@index([lecturerStaffProfileId])
+}
+
+model AdviserAssignment {
+  id               String   @id @default(cuid())
+  staffProfileId   String
+  facultyId        String
+  departmentId     String?
+  programmeId      String?
+  levelId          String?
+  sessionId        String
+  semesterId       String
+  isActive         Boolean  @default(true)
+  assignedByUserId String?
+  assignedAt       DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  staffProfile StaffProfile    @relation("AdviserAssignments", fields: [staffProfileId], references: [id], onDelete: Restrict)
+  faculty      Faculty         @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  department   Department?     @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  programme    Programme?      @relation(fields: [programmeId], references: [id], onDelete: SetNull)
+  level        Level?          @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  session      AcademicSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  semester     Semester        @relation(fields: [semesterId], references: [id], onDelete: Restrict)
+
+  @@index([staffProfileId])
+  @@index([facultyId])
+  @@index([departmentId])
+  @@index([programmeId])
+  @@index([levelId])
+  @@index([sessionId])
+  @@index([semesterId])
 }
