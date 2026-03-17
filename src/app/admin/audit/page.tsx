@@ -1,66 +1,34 @@
-import Link from "next/link";
-import { listSemesters } from "@/modules/academics/services/list-semesters";
-import { archiveSemesterAction } from "@/modules/academics/actions/archive-semester";
-import { restoreSemesterAction } from "@/modules/academics/actions/restore-semester";
+import { prisma } from "@/lib/db/prisma";
 
-export default async function SemestersPage() {
-  const semesters = await listSemesters();
+export default async function AuditPage() {
+  const logs = await prisma.auditLog.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Semesters</h1>
-        <Link
-          href="/admin/academics/semesters/new"
-          className="rounded-xl bg-gray-900 px-4 py-2 text-sm text-white"
-        >
-          New Semester
-        </Link>
-      </div>
-
+      <h1 className="text-2xl font-semibold">Audit Logs</h1>
       <div className="mt-6 overflow-hidden rounded-2xl border bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left">
             <tr>
-              <th className="px-4 py-3">Code</th>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Active</th>
-              <th className="px-4 py-3">Current</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="px-4 py-3">Action</th>
+              <th className="px-4 py-3">Entity Type</th>
+              <th className="px-4 py-3">Entity ID</th>
+              <th className="px-4 py-3">Summary</th>
+              <th className="px-4 py-3">Created At</th>
             </tr>
           </thead>
           <tbody>
-            {semesters.map((semester) => (
-              <tr key={semester.id} className="border-t">
-                <td className="px-4 py-3">{semester.code}</td>
-                <td className="px-4 py-3">{semester.name}</td>
-                <td className="px-4 py-3">{semester.isActive ? "Yes" : "No"}</td>
-                <td className="px-4 py-3">{semester.isCurrent ? "Yes" : "No"}</td>
+            {logs.map((log) => (
+              <tr key={log.id} className="border-t align-top">
+                <td className="px-4 py-3">{log.action}</td>
+                <td className="px-4 py-3">{log.entityType}</td>
+                <td className="px-4 py-3">{log.entityId ?? "-"}</td>
+                <td className="px-4 py-3">{log.summary ?? "-"}</td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Link
-                      href={`/admin/academics/semesters/${semester.id}/edit`}
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      Edit
-                    </Link>
-
-                    {semester.isActive ? (
-                      <form action={archiveSemesterAction}>
-                        <input type="hidden" name="id" value={semester.id} />
-                        <button type="submit" className="text-sm text-red-600 hover:underline">
-                          Archive
-                        </button>
-                      </form>
-                    ) : (
-                      <form action={restoreSemesterAction}>
-                        <input type="hidden" name="id" value={semester.id} />
-                        <button type="submit" className="text-sm text-green-600 hover:underline">
-                          Restore
-                        </button>
-                      </form>
-                    )}
-                  </div>
+                  {new Date(log.createdAt).toLocaleString()}
                 </td>
               </tr>
             ))}
