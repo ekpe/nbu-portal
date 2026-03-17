@@ -260,6 +260,42 @@ async function main() {
       status: "ACTIVE",
     },
   });
+
+  const currentSession = await prisma.academicSession.findFirstOrThrow({
+    where: { isCurrent: true },
+  });
+
+  const currentSemester = await prisma.semester.findFirstOrThrow({
+    where: { isCurrent: true },
+  });
+
+  const studentProfile = await prisma.studentProfile.findUniqueOrThrow({
+    where: { userId: student.id },
+  });  
+
+  const existingEnrollment = await prisma.studentProgrammeEnrollment.findFirst({
+    where: {
+      studentProfileId: studentProfile.id,
+      sessionId: currentSession.id,
+      semesterId: currentSemester.id,
+    },
+  });
+
+  if (!existingEnrollment) {
+    await prisma.studentProgrammeEnrollment.create({
+      data: {
+        studentProfileId: studentProfile.id,
+        programmeId: csProgramme.id,
+        departmentId: csDept.id,
+        facultyId: fcit.id,
+        levelId: level100.id,
+        sessionId: currentSession.id,
+        semesterId: currentSemester.id,
+        enrollmentStatus: "ACTIVE",
+        isCurrent: true,
+      },
+    });
+  }
 }
 
 main()

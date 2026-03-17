@@ -1,0 +1,1 @@
+export { listAvailableCourseOfferingsForStudent as listAvailableCourseOffingsForStudentAlias } from "@/modules/registration/services/list-available-course-offerings-for-student";

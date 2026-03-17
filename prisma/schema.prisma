@@ -63,30 +63,34 @@ model UserRole {
 }
 
 model AcademicSession {
-  id                String              @id @default(cuid())
-  name              String              @unique
-  startDate         DateTime?
-  endDate           DateTime?
-  isActive          Boolean             @default(true)
-  isCurrent         Boolean             @default(false)
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  CourseOffering    CourseOffering[]
-  AdviserAssignment AdviserAssignment[]
+  id                         String                       @id @default(cuid())
+  name                       String                       @unique
+  startDate                  DateTime?
+  endDate                    DateTime?
+  isActive                   Boolean                      @default(true)
+  isCurrent                  Boolean                      @default(false)
+  createdAt                  DateTime                     @default(now())
+  updatedAt                  DateTime                     @updatedAt
+  CourseOffering             CourseOffering[]
+  AdviserAssignment          AdviserAssignment[]
+  StudentProgrammeEnrollment StudentProgrammeEnrollment[]
+  CourseRegistration         CourseRegistration[]
 }
 
 model Semester {
-  id                String              @id @default(cuid())
-  code              String              @unique
-  name              String
-  startDate         DateTime?
-  endDate           DateTime?
-  isActive          Boolean             @default(true)
-  isCurrent         Boolean             @default(false)
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  CourseOffering    CourseOffering[]
-  AdviserAssignment AdviserAssignment[]
+  id                         String                       @id @default(cuid())
+  code                       String                       @unique
+  name                       String
+  startDate                  DateTime?
+  endDate                    DateTime?
+  isActive                   Boolean                      @default(true)
+  isCurrent                  Boolean                      @default(false)
+  createdAt                  DateTime                     @default(now())
+  updatedAt                  DateTime                     @updatedAt
+  CourseOffering             CourseOffering[]
+  AdviserAssignment          AdviserAssignment[]
+  StudentProgrammeEnrollment StudentProgrammeEnrollment[]
+  CourseRegistration         CourseRegistration[]
 }
 
 model Faculty {
@@ -98,13 +102,14 @@ model Faculty {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  departments       Department[]
-  staffProfiles     StaffProfile[]
-  studentProfiles   StudentProfile[]
-  programmes        Programme[]
-  Course            Course[]
-  CourseOffering    CourseOffering[]
-  AdviserAssignment AdviserAssignment[]
+  departments                Department[]
+  staffProfiles              StaffProfile[]
+  studentProfiles            StudentProfile[]
+  programmes                 Programme[]
+  Course                     Course[]
+  CourseOffering             CourseOffering[]
+  AdviserAssignment          AdviserAssignment[]
+  StudentProgrammeEnrollment StudentProgrammeEnrollment[]
 }
 
 model Department {
@@ -117,13 +122,14 @@ model Department {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  faculty           Faculty             @relation(fields: [facultyId], references: [id], onDelete: Restrict)
-  programmes        Programme[]
-  staffProfiles     StaffProfile[]
-  studentProfiles   StudentProfile[]
-  Course            Course[]
-  CourseOffering    CourseOffering[]
-  AdviserAssignment AdviserAssignment[]
+  faculty                    Faculty                      @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  programmes                 Programme[]
+  staffProfiles              StaffProfile[]
+  studentProfiles            StudentProfile[]
+  Course                     Course[]
+  CourseOffering             CourseOffering[]
+  AdviserAssignment          AdviserAssignment[]
+  StudentProgrammeEnrollment StudentProgrammeEnrollment[]
 
   @@index([facultyId])
 }
@@ -140,12 +146,13 @@ model Programme {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  department        Department          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  faculty           Faculty             @relation(fields: [facultyId], references: [id], onDelete: Restrict)
-  studentProfiles   StudentProfile[]
-  Course            Course[]
-  CourseOffering    CourseOffering[]
-  AdviserAssignment AdviserAssignment[]
+  department                 Department                   @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  faculty                    Faculty                      @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  studentProfiles            StudentProfile[]
+  Course                     Course[]
+  CourseOffering             CourseOffering[]
+  AdviserAssignment          AdviserAssignment[]
+  StudentProgrammeEnrollment StudentProgrammeEnrollment[]
 
   @@index([departmentId])
   @@index([facultyId])
@@ -160,10 +167,11 @@ model Level {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  studentProfiles   StudentProfile[]
-  Course            Course[]
-  CourseOffering    CourseOffering[]
-  AdviserAssignment AdviserAssignment[]
+  studentProfiles            StudentProfile[]
+  Course                     Course[]
+  CourseOffering             CourseOffering[]
+  AdviserAssignment          AdviserAssignment[]
+  StudentProgrammeEnrollment StudentProgrammeEnrollment[]
 }
 
 model StudentProfile {
@@ -185,6 +193,9 @@ model StudentProfile {
   programme  Programme?  @relation(fields: [currentProgrammeId], references: [id], onDelete: SetNull)
   department Department? @relation(fields: [currentDepartmentId], references: [id], onDelete: SetNull)
   faculty    Faculty?    @relation(fields: [currentFacultyId], references: [id], onDelete: SetNull)
+
+  enrollments   StudentProgrammeEnrollment[]
+  registrations CourseRegistration[]
 
   @@index([currentLevelId])
   @@index([currentProgrammeId])
@@ -255,7 +266,8 @@ model Course {
   programme  Programme? @relation(fields: [programmeId], references: [id], onDelete: SetNull)
   level      Level?     @relation(fields: [levelId], references: [id], onDelete: SetNull)
 
-  offerings CourseOffering[]
+  offerings         CourseOffering[]
+  registrationItems CourseRegistrationItem[]
 
   @@index([departmentId])
   @@index([facultyId])
@@ -285,7 +297,8 @@ model CourseOffering {
   programme  Programme?      @relation(fields: [programmeId], references: [id], onDelete: SetNull)
   level      Level?          @relation(fields: [levelId], references: [id], onDelete: SetNull)
 
-  assignments CourseAssignment[]
+  assignments       CourseAssignment[]
+  registrationItems CourseRegistrationItem[]
 
   @@index([courseId])
   @@index([sessionId])
@@ -344,4 +357,88 @@ model AdviserAssignment {
   @@index([levelId])
   @@index([sessionId])
   @@index([semesterId])
+}
+
+model StudentProgrammeEnrollment {
+  id               String   @id @default(cuid())
+  studentProfileId String
+  programmeId      String
+  departmentId     String
+  facultyId        String
+  levelId          String
+  sessionId        String
+  semesterId       String
+  enrollmentStatus String   @default("ACTIVE")
+  isCurrent        Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  studentProfile StudentProfile  @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  programme      Programme       @relation(fields: [programmeId], references: [id], onDelete: Restrict)
+  department     Department      @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  faculty        Faculty         @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  level          Level           @relation(fields: [levelId], references: [id], onDelete: Restrict)
+  session        AcademicSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  semester       Semester        @relation(fields: [semesterId], references: [id], onDelete: Restrict)
+
+  registrations CourseRegistration[]
+
+  @@index([studentProfileId])
+  @@index([programmeId])
+  @@index([departmentId])
+  @@index([facultyId])
+  @@index([levelId])
+  @@index([sessionId])
+  @@index([semesterId])
+}
+
+model CourseRegistration {
+  id               String    @id @default(cuid())
+  studentProfileId String
+  sessionId        String
+  semesterId       String
+  enrollmentId     String
+  status           String    @default("DRAFT")
+  totalCredits     Int       @default(0)
+  submittedAt      DateTime?
+  approvedAt       DateTime?
+  rejectedAt       DateTime?
+  lockedAt         DateTime?
+  createdByUserId  String?
+  updatedByUserId  String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  studentProfile StudentProfile             @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  session        AcademicSession            @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  semester       Semester                   @relation(fields: [semesterId], references: [id], onDelete: Restrict)
+  enrollment     StudentProgrammeEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+
+  items CourseRegistrationItem[]
+
+  @@index([studentProfileId])
+  @@index([sessionId])
+  @@index([semesterId])
+  @@index([enrollmentId])
+  @@index([status])
+}
+
+model CourseRegistrationItem {
+  id               String   @id @default(cuid())
+  registrationId   String
+  courseOfferingId String
+  courseId         String
+  creditUnits      Int
+  itemType         String   @default("NORMAL")
+  isCarryover      Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  registration   CourseRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  courseOffering CourseOffering     @relation(fields: [courseOfferingId], references: [id], onDelete: Restrict)
+  course         Course             @relation(fields: [courseId], references: [id], onDelete: Restrict)
+
+  @@index([registrationId])
+  @@index([courseOfferingId])
+  @@index([courseId])
 }
