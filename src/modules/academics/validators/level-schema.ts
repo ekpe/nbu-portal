@@ -7,4 +7,4 @@ export const levelSchema = z.object({
   isActive: z.coerce.boolean().default(true),
 });
 
-export type LevelInput = z.infer<typeof levelSchema>;meSchema>;
+export type LevelInput = z.infer<typeof levelSchema>;
