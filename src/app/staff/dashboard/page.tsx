@@ -43,6 +43,17 @@ export default async function StaffDashboardPage() {
             <h2 className="text-lg font-medium">Registration Queue</h2>
             <p className="mt-2 text-sm text-gray-600">Review student registrations assigned to you.</p>
           </Link>
+
+	  <Link
+            href="/staff/results"
+            className="rounded-2xl border bg-white p-6 hover:bg-gray-50"
+          >
+            <h2 className="text-lg font-medium">My Result Sheets</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Open and manage your course result sheets.
+            </p>
+          </Link>
+
         </div>
       </main>
     </div>

@@ -75,6 +75,9 @@ model AcademicSession {
   AdviserAssignment          AdviserAssignment[]
   StudentProgrammeEnrollment StudentProgrammeEnrollment[]
   CourseRegistration         CourseRegistration[]
+  ResultSheet                ResultSheet[]
+  GPARecord                  GPARecord[]
+  CGPARecord                 CGPARecord[]
 }
 
 model Semester {
@@ -91,6 +94,9 @@ model Semester {
   AdviserAssignment          AdviserAssignment[]
   StudentProgrammeEnrollment StudentProgrammeEnrollment[]
   CourseRegistration         CourseRegistration[]
+  ResultSheet                ResultSheet[]
+  GPARecord                  GPARecord[]
+  CGPARecord                 CGPARecord[]
 }
 
 model Faculty {
@@ -196,6 +202,9 @@ model StudentProfile {
 
   enrollments   StudentProgrammeEnrollment[]
   registrations CourseRegistration[]
+  resultEntries ResultEntry[]
+  gpaRecords    GPARecord[]
+  cgpaRecords   CGPARecord[]
 
   @@index([currentLevelId])
   @@index([currentProgrammeId])
@@ -222,6 +231,7 @@ model StaffProfile {
 
   lecturerAssignments CourseAssignment[]  @relation("LecturerAssignments")
   adviserAssignments  AdviserAssignment[] @relation("AdviserAssignments")
+  resultSheets        ResultSheet[]
 
   @@index([departmentId])
   @@index([facultyId])
@@ -299,6 +309,7 @@ model CourseOffering {
 
   assignments       CourseAssignment[]
   registrationItems CourseRegistrationItem[]
+  resultSheets      ResultSheet[]
 
   @@index([courseId])
   @@index([sessionId])
@@ -414,7 +425,8 @@ model CourseRegistration {
   semester       Semester                   @relation(fields: [semesterId], references: [id], onDelete: Restrict)
   enrollment     StudentProgrammeEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
 
-  items CourseRegistrationItem[]
+  items         CourseRegistrationItem[]
+  resultEntries ResultEntry[]
 
   @@index([studentProfileId])
   @@index([sessionId])
@@ -441,4 +453,127 @@ model CourseRegistrationItem {
   @@index([registrationId])
   @@index([courseOfferingId])
   @@index([courseId])
+}
+
+model ResultSheet {
+  id                       String    @id @default(cuid())
+  courseOfferingId         String
+  sessionId                String
+  semesterId               String
+  lecturerStaffProfileId   String
+  status                   String    @default("DRAFT")
+  numberOfStudents         Int       @default(0)
+  numberRegisteredStudents Int?
+  submittedAt              DateTime?
+  approvedAt               DateTime?
+  publishedAt              DateTime?
+  rejectedAt               DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  offering CourseOffering  @relation(fields: [courseOfferingId], references: [id], onDelete: Restrict)
+  session  AcademicSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  semester Semester        @relation(fields: [semesterId], references: [id], onDelete: Restrict)
+  lecturer StaffProfile    @relation(fields: [lecturerStaffProfileId], references: [id], onDelete: Restrict)
+
+  entries    ResultEntry[]
+  approvals  ResultApprovalAction[]
+  gpaRecords GPARecord[]
+
+  @@index([courseOfferingId])
+  @@index([sessionId])
+  @@index([semesterId])
+  @@index([lecturerStaffProfileId])
+  @@index([status])
+}
+
+model ResultEntry {
+  id               String   @id @default(cuid())
+  resultSheetId    String
+  studentProfileId String
+  registrationId   String?
+  caScore          Float?
+  examScore        Float?
+  totalScore       Float?
+  letterGrade      String?
+  gradePoint       Float?
+  remark           String?
+  q1Score          Float?
+  q2Score          Float?
+  q3Score          Float?
+  q4Score          Float?
+  q5Score          Float?
+  q6Score          Float?
+  q7Score          Float?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  resultSheet    ResultSheet         @relation(fields: [resultSheetId], references: [id], onDelete: Cascade)
+  studentProfile StudentProfile      @relation(fields: [studentProfileId], references: [id], onDelete: Restrict)
+  registration   CourseRegistration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+
+  @@index([resultSheetId])
+  @@index([studentProfileId])
+  @@index([registrationId])
+}
+
+model ResultApprovalAction {
+  id            String   @id @default(cuid())
+  resultSheetId String
+  actorUserId   String?
+  actionType    String
+  fromStatus    String?
+  toStatus      String?
+  comment       String?
+  createdAt     DateTime @default(now())
+
+  resultSheet ResultSheet @relation(fields: [resultSheetId], references: [id], onDelete: Cascade)
+
+  @@index([resultSheetId])
+  @@index([actorUserId])
+}
+
+model GPARecord {
+  id                  String   @id @default(cuid())
+  studentProfileId    String
+  sessionId           String
+  semesterId          String
+  totalUnitsAttempted Int
+  totalUnitsPassed    Int
+  totalGradePoints    Float
+  gpa                 Float
+  calculatedAt        DateTime @default(now())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  studentProfile StudentProfile  @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  session        AcademicSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  semester       Semester        @relation(fields: [semesterId], references: [id], onDelete: Restrict)
+  ResultSheet    ResultSheet?    @relation(fields: [resultSheetId], references: [id])
+  resultSheetId  String?
+
+  @@index([studentProfileId])
+  @@index([sessionId])
+  @@index([semesterId])
+}
+
+model CGPARecord {
+  id                         String   @id @default(cuid())
+  studentProfileId           String
+  sessionId                  String
+  semesterId                 String
+  totalCumulativeUnits       Int
+  totalCumulativeGradePoints Float
+  cgpa                       Float
+  calculatedAt               DateTime @default(now())
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  studentProfile StudentProfile  @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  session        AcademicSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  semester       Semester        @relation(fields: [semesterId], references: [id], onDelete: Restrict)
+
+  @@index([studentProfileId])
+  @@index([sessionId])
+  @@index([semesterId])
 }

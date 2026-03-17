@@ -1,57 +1,33 @@
-import { listCourseAssignments } from "@/modules/assignments/services/list-course-assignments";
-import { archiveCourseAssignmentAction } from "@/modules/assignments/actions/archive-course-assignment";
-import { restoreCourseAssignmentAction } from "@/modules/assignments/actions/restore-course-assignment";
+import { prisma } from "@/lib/db/prisma";
+import { CourseAssignmentForm } from "@/components/forms/course-assignment-form";
 
-export default async function CourseAssignmentsPage() {
-  const assignments = await listCourseAssignments();
+export default async function NewCourseAssignmentPage() {
+  const [offerings, lecturers] = await Promise.all([
+    prisma.courseOffering.findMany({
+      where: { isActive: true },
+      include: { course: true, session: true, semester: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.staffProfile.findMany({
+      where: { employmentStatus: "ACTIVE" },
+      include: { user: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Course Assignments</h1>
-      <div className="mt-6 overflow-hidden rounded-2xl border bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left">Course</th>
-              <th className="px-4 py-3 text-left">Session</th>
-              <th className="px-4 py-3 text-left">Semester</th>
-              <th className="px-4 py-3 text-left">Lecturer</th>
-              <th className="px-4 py-3 text-left">Primary</th>
-              <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {assignments.map((assignment) => (
-              <tr key={assignment.id} className="border-t">
-                <td className="px-4 py-3">
-                  {assignment.offering.course.courseCode} - {assignment.offering.course.title}
-                </td>
-                <td className="px-4 py-3">{assignment.offering.session.name}</td>
-                <td className="px-4 py-3">{assignment.offering.semester.name}</td>
-                <td className="px-4 py-3">
-                  {assignment.lecturer.user.firstName} {assignment.lecturer.user.lastName}
-                </td>
-                <td className="px-4 py-3">{assignment.isPrimary ? "Yes" : "No"}</td>
-                <td className="px-4 py-3">{assignment.isActive ? "Active" : "Archived"}</td>
-                <td className="px-4 py-3">
-                  {assignment.isActive ? (
-                    <form action={archiveCourseAssignmentAction}>
-                      <input type="hidden" name="id" value={assignment.id} />
-                      <button className="text-red-600 hover:underline">Archive</button>
-                    </form>
-                  ) : (
-                    <form action={restoreCourseAssignmentAction}>
-                      <input type="hidden" name="id" value={assignment.id} />
-                      <button className="text-green-600 hover:underline">Restore</button>
-                    </form>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <h1 className="mb-6 text-2xl font-semibold">Assign Lecturer to Course</h1>
+      <CourseAssignmentForm
+        offerings={offerings.map((o) => ({
+          id: o.id,
+          label: `${o.course.courseCode} - ${o.course.title} (${o.session.name} / ${o.semester.name})`,
+        }))}
+        lecturers={lecturers.map((l) => ({
+          id: l.id,
+          label: `${l.user.firstName} ${l.user.lastName} (${l.staffNumber})`,
+        }))}
+      />
     </div>
   );
 }

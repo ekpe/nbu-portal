@@ -16,6 +16,7 @@ const links = [
   { href: "/admin/users/students", label: "Students" },
   { href: "/admin/users/staff", label: "Staff" },
   { href: "/admin/audit", label: "Audit Logs" },
+  { href: "/admin/results/review-queue", label: "Result Review Queue" },
 ];
 
 export function AdminSidebar() {

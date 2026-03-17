@@ -43,6 +43,17 @@ export default async function StudentDashboardPage() {
             <h2 className="text-lg font-medium">Registration History</h2>
             <p className="mt-2 text-sm text-gray-600">View your past registrations.</p>
           </Link>
+
+          <Link
+            href="/student/results"
+            className="rounded-2xl border bg-white p-6 hover:bg-gray-50"
+          >
+            <h2 className="text-lg font-medium">My Results</h2>
+            <p className="mt-2 text-sm text-gray-600">
+             View your published semester results and GPA.
+            </p>
+          </Link>
+
         </div>
       </main>
     </div>
