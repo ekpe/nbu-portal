@@ -54,6 +54,15 @@ export default async function StaffDashboardPage() {
             </p>
           </Link>
 
+          <Link
+            href="/staff/results"
+            className="rounded-2xl border bg-white p-6 hover:bg-gray-50"
+          >
+            <h2 className="text-lg font-medium">Results Management</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Enter results, import Excel sheets, and request amendments.
+            </p>
+          </Link>
         </div>
       </main>
     </div>

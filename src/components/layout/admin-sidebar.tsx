@@ -17,6 +17,7 @@ const links = [
   { href: "/admin/users/staff", label: "Staff" },
   { href: "/admin/audit", label: "Audit Logs" },
   { href: "/admin/results/review-queue", label: "Result Review Queue" },
+  { href: "/admin/results/amendments", label: "Result Amendments" },
 ];
 
 export function AdminSidebar() {

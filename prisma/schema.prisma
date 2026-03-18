@@ -456,29 +456,35 @@ model CourseRegistrationItem {
 }
 
 model ResultSheet {
-  id                       String    @id @default(cuid())
-  courseOfferingId         String
-  sessionId                String
-  semesterId               String
-  lecturerStaffProfileId   String
-  status                   String    @default("DRAFT")
-  numberOfStudents         Int       @default(0)
-  numberRegisteredStudents Int?
-  submittedAt              DateTime?
-  approvedAt               DateTime?
-  publishedAt              DateTime?
-  rejectedAt               DateTime?
-  createdAt                DateTime  @default(now())
-  updatedAt                DateTime  @updatedAt
+  id                            String    @id @default(cuid())
+  courseOfferingId              String
+  sessionId                     String
+  semesterId                    String
+  lecturerStaffProfileId        String
+  status                        String    @default("DRAFT")
+  numberOfStudents              Int       @default(0)
+  numberRegisteredStudents      Int?
+  submittedAt                   DateTime?
+  approvedAt                    DateTime?
+  publishedAt                   DateTime?
+  rejectedAt                    DateTime?
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+  courseCoordinatorName         String?
+  courseLecturerName            String?
+  headOfDepartmentName          String?
+  deanOfFacultyName             String?
+  facultyExaminationOfficerName String?
 
   offering CourseOffering  @relation(fields: [courseOfferingId], references: [id], onDelete: Restrict)
   session  AcademicSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
   semester Semester        @relation(fields: [semesterId], references: [id], onDelete: Restrict)
   lecturer StaffProfile    @relation(fields: [lecturerStaffProfileId], references: [id], onDelete: Restrict)
 
-  entries    ResultEntry[]
-  approvals  ResultApprovalAction[]
-  gpaRecords GPARecord[]
+  entries                ResultEntry[]
+  approvals              ResultApprovalAction[]
+  gpaRecords             GPARecord[]
+  ResultAmendmentRequest ResultAmendmentRequest[]
 
   @@index([courseOfferingId])
   @@index([sessionId])
@@ -488,25 +494,28 @@ model ResultSheet {
 }
 
 model ResultEntry {
-  id               String   @id @default(cuid())
-  resultSheetId    String
-  studentProfileId String
-  registrationId   String?
-  caScore          Float?
-  examScore        Float?
-  totalScore       Float?
-  letterGrade      String?
-  gradePoint       Float?
-  remark           String?
-  q1Score          Float?
-  q2Score          Float?
-  q3Score          Float?
-  q4Score          Float?
-  q5Score          Float?
-  q6Score          Float?
-  q7Score          Float?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                String   @id @default(cuid())
+  resultSheetId     String
+  studentProfileId  String
+  registrationId    String?
+  caScore           Float?
+  examScore         Float?
+  totalScore        Float?
+  letterGrade       String?
+  gradePoint        Float?
+  remark            String?
+  q1Score           Float?
+  q2Score           Float?
+  q3Score           Float?
+  q4Score           Float?
+  q5Score           Float?
+  q6Score           Float?
+  q7Score           Float?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  isPassed          Boolean?
+  contributesToGPA  Boolean  @default(true)
+  triggersCarryover Boolean  @default(false)
 
   resultSheet    ResultSheet         @relation(fields: [resultSheetId], references: [id], onDelete: Cascade)
   studentProfile StudentProfile      @relation(fields: [studentProfileId], references: [id], onDelete: Restrict)
@@ -545,6 +554,8 @@ model GPARecord {
   calculatedAt        DateTime @default(now())
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  academicStanding    String?
+  carryoverCount      Int      @default(0)
 
   studentProfile StudentProfile  @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
   session        AcademicSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
@@ -568,6 +579,8 @@ model CGPARecord {
   calculatedAt               DateTime @default(now())
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
+  cumulativeCarryoverCount   Int      @default(0)
+  academicStanding           String?
 
   studentProfile StudentProfile  @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
   session        AcademicSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
@@ -576,4 +589,24 @@ model CGPARecord {
   @@index([studentProfileId])
   @@index([sessionId])
   @@index([semesterId])
+}
+
+model ResultAmendmentRequest {
+  id                String    @id @default(cuid())
+  resultSheetId     String
+  requestedByUserId String?
+  approvedByUserId  String?
+  reason            String
+  status            String    @default("PENDING")
+  requestedAt       DateTime  @default(now())
+  approvedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  resultSheet ResultSheet @relation(fields: [resultSheetId], references: [id], onDelete: Cascade)
+
+  @@index([resultSheetId])
+  @@index([requestedByUserId])
+  @@index([approvedByUserId])
+  @@index([status])
 }

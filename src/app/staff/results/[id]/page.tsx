@@ -5,6 +5,9 @@ import { getResultSheetById } from "@/modules/results/services/get-result-sheet-
 import { generateResultSheetStudentsAction } from "@/modules/results/actions/generate-result-sheet-students";
 import { saveResultEntryAction } from "@/modules/results/actions/save-result-entry";
 import { submitResultSheetAction } from "@/modules/results/actions/submit-result-sheet";
+import { importResultSheetAction } from "@/modules/results/actions/import-result-sheet";
+import { importMasterSheetAction } from "@/modules/results/actions/import-master-sheet";
+import { requestResultAmendmentAction } from "@/modules/results/actions/request-result-amendment";
 
 export default async function StaffResultSheetDetailPage({
   params,
@@ -198,13 +201,43 @@ export default async function StaffResultSheetDetailPage({
         </div>
 
         {sheet.status === "DRAFT" ? (
-          <form action={submitResultSheetAction}>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <form action={importResultSheetAction} className="rounded-2xl border bg-white p-4">
+              <input type="hidden" name="resultSheetId" value={sheet.id} />
+              <p className="mb-2 font-medium">Import Result Sheet Excel</p>
+              <input type="file" name="file" accept=".xlsx,.xls" required className="block w-full" />
+              <button className="mt-3 rounded-xl bg-gray-900 px-4 py-2 text-white">
+                Upload Result Sheet
+              </button>
+            </form>
+
+            <form action={importMasterSheetAction} className="rounded-2xl border bg-white p-4">
+              <input type="hidden" name="resultSheetId" value={sheet.id} />
+              <p className="mb-2 font-medium">Import Master Sheet Excel</p>
+              <input type="file" name="file" accept=".xlsx,.xls" required className="block w-full" />
+              <button className="mt-3 rounded-xl bg-gray-900 px-4 py-2 text-white">
+                Upload Master Sheet
+              </button>
+            </form>
+          </div>
+        ) : null}
+
+        {["DEAN_APPROVED", "PUBLISHED"].includes(sheet.status) ? (
+          <form action={requestResultAmendmentAction} className="rounded-2xl border bg-white p-4">
             <input type="hidden" name="resultSheetId" value={sheet.id} />
-            <button className="rounded-xl bg-blue-700 px-4 py-3 text-white">
-              Submit Result Sheet
+            <textarea
+              name="reason"
+              required
+              rows={4}
+              className="w-full rounded-xl border px-4 py-3"
+              placeholder="State the reason for result amendment request"
+            />
+            <button className="mt-3 rounded-xl bg-amber-700 px-4 py-2 text-white">
+              Request Amendment
             </button>
           </form>
         ) : null}
+
       </main>
     </div>
   );
