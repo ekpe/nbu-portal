@@ -8,26 +8,35 @@ function normalizeCellValue(value: unknown): unknown {
   if (value == null) return "";
 
   if (typeof value === "object" && value !== null) {
-    // ExcelJS rich text / formula / hyperlink / date-like objects
-    if ("text" in (value as Record<string, unknown>)) {
-      return String((value as Record<string, unknown>).text ?? "").trim();
+    const record = value as Record<string, unknown>;
+
+    if ("text" in record) {
+      return String(record.text ?? "").trim();
     }
 
-    if ("result" in (value as Record<string, unknown>)) {
-      return (value as Record<string, unknown>).result ?? "";
+    if ("result" in record) {
+      return record.result ?? "";
     }
 
-    if ("hyperlink" in (value as Record<string, unknown>)) {
-      return String((value as Record<string, unknown>).text ?? "").trim();
+    if ("hyperlink" in record) {
+      return String(record.text ?? "").trim();
     }
   }
 
   return value;
 }
 
-export async function parseResultUpload(fileBuffer: Buffer): Promise<Record<string, unknown>[]> {
+export async function parseResultUpload(
+  fileBuffer: Uint8Array,
+): Promise<Record<string, unknown>[]> {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(fileBuffer);
+
+  const arrayBuffer = fileBuffer.buffer.slice(
+    fileBuffer.byteOffset,
+    fileBuffer.byteOffset + fileBuffer.byteLength,
+  ) as ArrayBuffer;
+
+  await workbook.xlsx.load(arrayBuffer);
 
   const worksheet = workbook.worksheets[0];
   if (!worksheet) return [];
