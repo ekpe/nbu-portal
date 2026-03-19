@@ -31,6 +31,7 @@ model User {
   roles          UserRole[]
   studentProfile StudentProfile?
   staffProfile   StaffProfile?
+  notifications  Notification[]
 }
 
 model Role {
@@ -78,6 +79,7 @@ model AcademicSession {
   ResultSheet                ResultSheet[]
   GPARecord                  GPARecord[]
   CGPARecord                 CGPARecord[]
+  TranscriptLedgerEntry      TranscriptLedgerEntry[]
 }
 
 model Semester {
@@ -97,6 +99,7 @@ model Semester {
   ResultSheet                ResultSheet[]
   GPARecord                  GPARecord[]
   CGPARecord                 CGPARecord[]
+  TranscriptLedgerEntry      TranscriptLedgerEntry[]
 }
 
 model Faculty {
@@ -200,11 +203,12 @@ model StudentProfile {
   department Department? @relation(fields: [currentDepartmentId], references: [id], onDelete: SetNull)
   faculty    Faculty?    @relation(fields: [currentFacultyId], references: [id], onDelete: SetNull)
 
-  enrollments   StudentProgrammeEnrollment[]
-  registrations CourseRegistration[]
-  resultEntries ResultEntry[]
-  gpaRecords    GPARecord[]
-  cgpaRecords   CGPARecord[]
+  enrollments             StudentProgrammeEnrollment[]
+  registrations           CourseRegistration[]
+  resultEntries           ResultEntry[]
+  gpaRecords              GPARecord[]
+  cgpaRecords             CGPARecord[]
+  transcriptLedgerEntries TranscriptLedgerEntry[]
 
   @@index([currentLevelId])
   @@index([currentProgrammeId])
@@ -276,8 +280,9 @@ model Course {
   programme  Programme? @relation(fields: [programmeId], references: [id], onDelete: SetNull)
   level      Level?     @relation(fields: [levelId], references: [id], onDelete: SetNull)
 
-  offerings         CourseOffering[]
-  registrationItems CourseRegistrationItem[]
+  offerings             CourseOffering[]
+  registrationItems     CourseRegistrationItem[]
+  TranscriptLedgerEntry TranscriptLedgerEntry[]
 
   @@index([departmentId])
   @@index([facultyId])
@@ -404,21 +409,24 @@ model StudentProgrammeEnrollment {
 }
 
 model CourseRegistration {
-  id               String    @id @default(cuid())
+  id               String                       @id @default(cuid())
   studentProfileId String
   sessionId        String
   semesterId       String
   enrollmentId     String
-  status           String    @default("DRAFT")
-  totalCredits     Int       @default(0)
+  status           String                       @default("DRAFT")
+  totalCredits     Int                          @default(0)
   submittedAt      DateTime?
   approvedAt       DateTime?
   rejectedAt       DateTime?
   lockedAt         DateTime?
   createdByUserId  String?
   updatedByUserId  String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
+  hodApprovedAt    DateTime?
+  deanApprovedAt   DateTime?
+  approvals        RegistrationApprovalAction[]
 
   studentProfile StudentProfile             @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
   session        AcademicSession            @relation(fields: [sessionId], references: [id], onDelete: Restrict)
@@ -521,6 +529,8 @@ model ResultEntry {
   studentProfile StudentProfile      @relation(fields: [studentProfileId], references: [id], onDelete: Restrict)
   registration   CourseRegistration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
 
+  transcriptEntries TranscriptLedgerEntry[]
+
   @@index([resultSheetId])
   @@index([studentProfileId])
   @@index([registrationId])
@@ -609,4 +619,66 @@ model ResultAmendmentRequest {
   @@index([requestedByUserId])
   @@index([approvedByUserId])
   @@index([status])
+}
+
+model RegistrationApprovalAction {
+  id             String   @id @default(cuid())
+  registrationId String
+  actorUserId    String?
+  actionType     String
+  fromStatus     String?
+  toStatus       String?
+  comment        String?
+  createdAt      DateTime @default(now())
+
+  registration CourseRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+
+  @@index([registrationId])
+  @@index([actorUserId])
+}
+
+model TranscriptLedgerEntry {
+  id               String   @id @default(cuid())
+  studentProfileId String
+  sessionId        String
+  semesterId       String
+  courseId         String
+  resultEntryId    String?
+  courseCode       String
+  courseTitle      String
+  creditUnits      Int
+  totalScore       Float?
+  letterGrade      String?
+  gradePoint       Float?
+  remark           String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  studentProfile StudentProfile  @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  session        AcademicSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  semester       Semester        @relation(fields: [semesterId], references: [id], onDelete: Restrict)
+  course         Course          @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  resultEntry    ResultEntry?    @relation(fields: [resultEntryId], references: [id], onDelete: SetNull)
+
+  @@index([studentProfileId])
+  @@index([sessionId])
+  @@index([semesterId])
+  @@index([courseId])
+  @@index([resultEntryId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
 }

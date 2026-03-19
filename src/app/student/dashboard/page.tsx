@@ -53,6 +53,16 @@ export default async function StudentDashboardPage() {
              View your published semester results and GPA.
             </p>
           </Link>
+  
+          <Link
+            href="/student/transcript"
+            className="rounded-2xl border bg-white p-6 hover:bg-gray-50"
+          >
+            <h2 className="text-lg font-medium">Transcript Ledger</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              View your cumulative academic ledger.
+            </p>
+          </Link>
 
         </div>
       </main>

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { buildSummarySheet } from "@/modules/results/services/build-summary-sheet";
+import { PrintToolbar } from "@/components/results/print-toolbar";
 
 export default async function SummarySheetPrintPage({
   params,

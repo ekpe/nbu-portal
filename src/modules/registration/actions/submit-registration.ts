@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { validateRegistration } from "@/modules/registration/services/validate-registration";
 import { registrationSubmitSchema } from "@/modules/registration/validators/registration-submit-schema";
 import { writeAuditLog } from "@/modules/audit/services/write-audit-log";
+import { validateRegistrationCarryoverRules } from "@/modules/registration/services/validate-registration-carryover-rules";
 
 export async function submitRegistrationAction(formData: FormData): Promise<void> {
   const session = await auth();
@@ -45,6 +46,13 @@ export async function submitRegistrationAction(formData: FormData): Promise<void
       updatedByUserId: session.user.id,
     },
   });
+
+  const carryoverValidation = await validateRegistrationCarryoverRules(registration.id);
+
+  if (!carryoverValidation.valid) {
+    throw new Error(carryoverValidation.errors[0] ?? "Carryover validation failed.");
+  }
+
 
   await writeAuditLog({
     actorId: session.user.id,

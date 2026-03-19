@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getResultSheetById } from "@/modules/results/services/get-result-sheet-by-id";
 import { ReviewResultSheetForm } from "@/components/forms/review-result-sheet-form";
+import { PrintToolbar } from "@/components/results/print-toolbar";
 
 export default async function AdminResultSheetDetailPage({
   params,

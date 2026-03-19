@@ -7,6 +7,7 @@ import { resultSheetSubmitSchema } from "@/modules/results/validators/result-she
 import { computeGPA } from "@/modules/results/services/compute-gpa";
 import { computeCGPA } from "@/modules/results/services/compute-cgpa";
 import { writeAuditLog } from "@/modules/audit/services/write-audit-log";
+import { rebuildTranscriptLedgerForStudent } from "@/modules/results/services/rebuild-transcript-ledger-for-student";
 
 export async function publishResultSheetAction(formData: FormData): Promise<void> {
   const session = await auth();
@@ -86,6 +87,7 @@ export async function publishResultSheetAction(formData: FormData): Promise<void
         cgpa: cgpa.cgpa,
       },
     });
+    await rebuildTranscriptLedgerForStudent(studentProfileId);
   }
 
   await prisma.resultApprovalAction.create({
@@ -106,6 +108,19 @@ export async function publishResultSheetAction(formData: FormData): Promise<void
     summary: "Published result sheet",
     beforeJson: sheet,
     afterJson: updated,
+  });
+
+  await createBulkNotifications({
+    userIds: (
+      await prisma.studentProfile.findMany({
+        where: {
+          id: { in: studentIds },
+        },
+        select: { userId: true },
+      })
+    ).map((s) => s.userId),
+    title: "Results published",
+    message: "A new published result is now available in your portal.",
   });
 
   redirect(`/admin/results/${updated.id}`);

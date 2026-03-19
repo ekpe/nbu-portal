@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { resultSheetSubmitSchema } from "@/modules/results/validators/result-sheet-submit-schema";
 import { validateResultSheet } from "@/modules/results/services/validate-result-sheet";
 import { writeAuditLog } from "@/modules/audit/services/write-audit-log";
+import { createBulkNotifications } from "@/modules/notifications/services/create-bulk-notifications";
 
 export async function submitResultSheetAction(formData: FormData): Promise<void> {
   const session = await auth();
@@ -55,6 +56,28 @@ export async function submitResultSheetAction(formData: FormData): Promise<void>
     summary: "Submitted result sheet",
     beforeJson: sheet,
     afterJson: updated,
+  });
+
+  const reviewers = await prisma.user.findMany({
+    where: {
+      roles: {
+        some: {
+          isActive: true,
+          role: {
+            code: {
+              in: ["HOD", "DEAN"],
+            },
+          },
+        },
+      },
+    },
+    select: { id: true },
+  });
+
+  await createBulkNotifications({
+    userIds: reviewers.map((u) => u.id),
+    title: "Result sheet submitted",
+    message: `A result sheet for ${sheet.id} is awaiting review.`,
   });
 
   redirect(`/staff/results/${updated.id}`);
