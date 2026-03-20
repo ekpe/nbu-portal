@@ -2,7 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/layout/app-header";
-import { getAdviserQueue } from "@/modules/registration/services/get-role-aware-registration-queue";
+import { getRoleAwareRegistrationQueue } from "@/modules/registration/services/get-role-aware-registration-queue";
 
 export default async function StaffRegistrationQueuePage() {
   const session = await auth();
@@ -11,7 +11,7 @@ export default async function StaffRegistrationQueuePage() {
     redirect("/login");
   }
 
-  const queue = await getAdviserQueue(session.user.id);
+  const queue = await getRoleAwareRegistrationQueue(session.user.id);
 
   return (
     <div className="min-h-screen bg-gray-50">

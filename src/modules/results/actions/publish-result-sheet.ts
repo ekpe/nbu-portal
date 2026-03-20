@@ -8,6 +8,7 @@ import { computeGPA } from "@/modules/results/services/compute-gpa";
 import { computeCGPA } from "@/modules/results/services/compute-cgpa";
 import { writeAuditLog } from "@/modules/audit/services/write-audit-log";
 import { rebuildTranscriptLedgerForStudent } from "@/modules/results/services/rebuild-transcript-ledger-for-student";
+import { createBulkNotifications } from "@/modules/notifications/services/create-bulk-notifications";
 
 export async function publishResultSheetAction(formData: FormData): Promise<void> {
   const session = await auth();
