@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { listStaff } from "@/modules/users/services/list-staff";
 
 export default async function AdminStaffPage() {
@@ -5,7 +6,16 @@ export default async function AdminStaffPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Staff</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Staff</h1>
+        <Link
+          href="/admin/users/staff/new"
+          className="rounded-xl bg-gray-900 px-4 py-2 text-sm text-white"
+        >
+          New Staff
+        </Link>
+      </div>
+
       <div className="mt-6 overflow-hidden rounded-2xl border bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left">
@@ -29,6 +39,13 @@ export default async function AdminStaffPage() {
                 <td className="px-4 py-3">{member.faculty?.name ?? "-"}</td>
               </tr>
             ))}
+            {staff.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
+                  No staff found.
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>

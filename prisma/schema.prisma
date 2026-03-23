@@ -80,6 +80,10 @@ model AcademicSession {
   GPARecord                  GPARecord[]
   CGPARecord                 CGPARecord[]
   TranscriptLedgerEntry      TranscriptLedgerEntry[]
+  StudentFinanceAccount      StudentFinanceAccount[]
+  PaymentTransaction         PaymentTransaction[]
+  ReceiptLedgerEntry         ReceiptLedgerEntry[]
+  InstallmentPlan            InstallmentPlan[]
 }
 
 model Semester {
@@ -100,6 +104,10 @@ model Semester {
   GPARecord                  GPARecord[]
   CGPARecord                 CGPARecord[]
   TranscriptLedgerEntry      TranscriptLedgerEntry[]
+  StudentFinanceAccount      StudentFinanceAccount[]
+  PaymentTransaction         PaymentTransaction[]
+  ReceiptLedgerEntry         ReceiptLedgerEntry[]
+  InstallmentPlan            InstallmentPlan[]
 }
 
 model Faculty {
@@ -209,6 +217,13 @@ model StudentProfile {
   gpaRecords              GPARecord[]
   cgpaRecords             CGPARecord[]
   transcriptLedgerEntries TranscriptLedgerEntry[]
+
+  financeAccount       StudentFinanceAccount?
+  paymentTransactions  PaymentTransaction[]
+  receiptLedgerEntries ReceiptLedgerEntry[]
+  financeHolds         FinanceHold[]
+  financeOverrides     FinanceOverrideRequest[]
+  installmentPlans     InstallmentPlan[]
 
   @@index([currentLevelId])
   @@index([currentProgrammeId])
@@ -681,4 +696,162 @@ model Notification {
   @@index([userId])
   @@index([isRead])
   @@index([createdAt])
+}
+
+model StudentFinanceAccount {
+  id                   String   @id @default(cuid())
+  studentProfileId     String   @unique
+  currentSessionId     String?
+  currentSemesterId    String?
+  tuitionAmountDue     Float    @default(0)
+  otherChargesDue      Float    @default(0)
+  totalAmountDue       Float    @default(0)
+  totalAmountPaid      Float    @default(0)
+  outstandingBalance   Float    @default(0)
+  isFinanciallyCleared Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  studentProfile  StudentProfile   @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  currentSession  AcademicSession? @relation(fields: [currentSessionId], references: [id], onDelete: SetNull)
+  currentSemester Semester?        @relation(fields: [currentSemesterId], references: [id], onDelete: SetNull)
+
+  paymentTransactions  PaymentTransaction[]
+  financeHolds         FinanceHold[]
+  financeOverrides     FinanceOverrideRequest[]
+  receiptLedgerEntries ReceiptLedgerEntry[]
+
+  @@index([currentSessionId])
+  @@index([currentSemesterId])
+  @@index([isFinanciallyCleared])
+}
+
+model PaymentTransaction {
+  id                      String    @id @default(cuid())
+  studentFinanceAccountId String
+  studentProfileId        String
+  reference               String    @unique
+  paymentChannel          String
+  paymentSource           String?
+  paymentDate             DateTime
+  amount                  Float
+  currency                String    @default("NGN")
+  paymentStatus           String    @default("PENDING")
+  verificationStatus      String    @default("UNVERIFIED")
+  externalTransactionId   String?
+  sessionId               String?
+  semesterId              String?
+  narration               String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  verificationCheckedAt   DateTime?
+  verifiedByUserId        String?
+  verificationMessage     String?
+
+  financeAccount StudentFinanceAccount @relation(fields: [studentFinanceAccountId], references: [id], onDelete: Cascade)
+  studentProfile StudentProfile        @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  session        AcademicSession?      @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  semester       Semester?             @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+
+  receiptLedgerEntries ReceiptLedgerEntry[]
+
+  @@index([studentFinanceAccountId])
+  @@index([studentProfileId])
+  @@index([paymentStatus])
+  @@index([verificationStatus])
+  @@index([sessionId])
+  @@index([semesterId])
+}
+
+model ReceiptLedgerEntry {
+  id                      String   @id @default(cuid())
+  studentFinanceAccountId String
+  studentProfileId        String
+  paymentTransactionId    String?
+  receiptNumber           String   @unique
+  receiptDate             DateTime
+  amount                  Float
+  description             String
+  sessionId               String?
+  semesterId              String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  financeAccount     StudentFinanceAccount @relation(fields: [studentFinanceAccountId], references: [id], onDelete: Cascade)
+  studentProfile     StudentProfile        @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  paymentTransaction PaymentTransaction?   @relation(fields: [paymentTransactionId], references: [id], onDelete: SetNull)
+  session            AcademicSession?      @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  semester           Semester?             @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+
+  @@index([studentFinanceAccountId])
+  @@index([studentProfileId])
+  @@index([paymentTransactionId])
+  @@index([sessionId])
+  @@index([semesterId])
+}
+
+model FinanceHold {
+  id                      String    @id @default(cuid())
+  studentFinanceAccountId String
+  studentProfileId        String
+  holdType                String
+  reason                  String
+  isActive                Boolean   @default(true)
+  placedByUserId          String?
+  releasedByUserId        String?
+  placedAt                DateTime  @default(now())
+  releasedAt              DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  financeAccount StudentFinanceAccount @relation(fields: [studentFinanceAccountId], references: [id], onDelete: Cascade)
+  studentProfile StudentProfile        @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  @@index([studentFinanceAccountId])
+  @@index([studentProfileId])
+  @@index([isActive])
+}
+
+model FinanceOverrideRequest {
+  id                      String    @id @default(cuid())
+  studentFinanceAccountId String
+  studentProfileId        String
+  requestedByUserId       String?
+  approvedByUserId        String?
+  requestType             String
+  reason                  String
+  status                  String    @default("PENDING")
+  approvedAt              DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  financeAccount StudentFinanceAccount @relation(fields: [studentFinanceAccountId], references: [id], onDelete: Cascade)
+  studentProfile StudentProfile        @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  @@index([studentFinanceAccountId])
+  @@index([studentProfileId])
+  @@index([status])
+}
+
+model InstallmentPlan {
+  id                        String    @id @default(cuid())
+  studentProfileId          String
+  sessionId                 String
+  semesterId                String
+  approvedByUserId          String?
+  totalAmountDue            Float
+  minimumRequiredToRegister Float
+  approvedAt                DateTime?
+  isActive                  Boolean   @default(true)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  studentProfile StudentProfile  @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  session        AcademicSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  semester       Semester        @relation(fields: [semesterId], references: [id], onDelete: Restrict)
+
+  @@index([studentProfileId])
+  @@index([sessionId])
+  @@index([semesterId])
+  @@index([isActive])
 }

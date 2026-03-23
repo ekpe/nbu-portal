@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { listStudents } from "@/modules/users/services/list-students";
 
 export default async function AdminStudentsPage() {
@@ -5,7 +6,16 @@ export default async function AdminStudentsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Students</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Students</h1>
+        <Link
+          href="/admin/users/students/new"
+          className="rounded-xl bg-gray-900 px-4 py-2 text-sm text-white"
+        >
+          New Student
+        </Link>
+      </div>
+
       <div className="mt-6 overflow-hidden rounded-2xl border bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left">
@@ -29,6 +39,13 @@ export default async function AdminStudentsPage() {
                 <td className="px-4 py-3">{student.level?.name ?? "-"}</td>
               </tr>
             ))}
+            {students.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
+                  No students found.
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>

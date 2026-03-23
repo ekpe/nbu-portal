@@ -281,6 +281,30 @@ async function main() {
     },
   });
 
+  const studentProfiles = await prisma.studentProfile.findMany();
+
+  for (const profile of studentProfiles) {
+    await prisma.studentFinanceAccount.upsert({
+      where: { studentProfileId: profile.id },
+      update: {
+        currentSessionId: currentSession?.id ?? null,
+        currentSemesterId: currentSemester?.id ?? null,
+      },
+      create: {
+        studentProfileId: profile.id,
+        currentSessionId: currentSession?.id ?? null,
+        currentSemesterId: currentSemester?.id ?? null,
+        tuitionAmountDue: 500000,
+        otherChargesDue: 50000,
+        totalAmountDue: 550000,
+        totalAmountPaid: 0,
+        outstandingBalance: 550000,
+        isFinanciallyCleared: false,
+      },
+    });
+   }
+
+
   if (!existingEnrollment) {
     await prisma.studentProgrammeEnrollment.create({
       data: {

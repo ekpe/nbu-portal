@@ -25,7 +25,9 @@ export default async function StudentDashboardPage() {
             className="rounded-2xl border bg-white p-6 hover:bg-gray-50"
           >
             <h2 className="text-lg font-medium">My Profile</h2>
-            <p className="mt-2 text-sm text-gray-600">View your student profile.</p>
+            <p className="mt-2 text-sm text-gray-600">
+              View your student profile.
+            </p>
           </Link>
 
           <Link
@@ -33,7 +35,9 @@ export default async function StudentDashboardPage() {
             className="rounded-2xl border bg-white p-6 hover:bg-gray-50"
           >
             <h2 className="text-lg font-medium">Course Registration</h2>
-            <p className="mt-2 text-sm text-gray-600">Start or continue your registration.</p>
+            <p className="mt-2 text-sm text-gray-600">
+              Start or continue your registration.
+            </p>
           </Link>
 
           <Link
@@ -41,7 +45,9 @@ export default async function StudentDashboardPage() {
             className="rounded-2xl border bg-white p-6 hover:bg-gray-50"
           >
             <h2 className="text-lg font-medium">Registration History</h2>
-            <p className="mt-2 text-sm text-gray-600">View your past registrations.</p>
+            <p className="mt-2 text-sm text-gray-600">
+              View your past registrations.
+            </p>
           </Link>
 
           <Link
@@ -50,10 +56,10 @@ export default async function StudentDashboardPage() {
           >
             <h2 className="text-lg font-medium">My Results</h2>
             <p className="mt-2 text-sm text-gray-600">
-             View your published semester results and GPA.
+              View your published semester results and GPA.
             </p>
           </Link>
-  
+
           <Link
             href="/student/transcript"
             className="rounded-2xl border bg-white p-6 hover:bg-gray-50"
@@ -64,6 +70,15 @@ export default async function StudentDashboardPage() {
             </p>
           </Link>
 
+          <Link
+            href="/student/finance"
+            className="rounded-2xl border bg-white p-6 hover:bg-gray-50"
+          >
+            <h2 className="text-lg font-medium">My Finance</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              View fees, receipts, and finance clearance.
+            </p>
+          </Link>
         </div>
       </main>
     </div>

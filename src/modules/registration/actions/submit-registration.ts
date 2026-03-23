@@ -7,6 +7,8 @@ import { validateRegistration } from "@/modules/registration/services/validate-r
 import { registrationSubmitSchema } from "@/modules/registration/validators/registration-submit-schema";
 import { writeAuditLog } from "@/modules/audit/services/write-audit-log";
 import { validateRegistrationCarryoverRules } from "@/modules/registration/services/validate-registration-carryover-rules";
+import { validateStudentFinancialClearance } from "@/modules/payments/services/validate-student-financial-clearance";
+import { checkStudentRegistrationFinanceClearance } from "@/modules/finance/services/check-student-registration-finance-clearance";
 
 export async function submitRegistrationAction(formData: FormData): Promise<void> {
   const session = await auth();
@@ -20,7 +22,22 @@ export async function submitRegistrationAction(formData: FormData): Promise<void
     throw new Error("Registration ID is required.");
   }
 
-  const registration = await prisma.courseRegistration.findUnique({
+  const clearance = await validateStudentFinancialClearance({
+    studentProfileId,
+    sessionId,
+    semesterId,
+  });
+
+  if (!clearance.allowed) {
+    return {
+      success: false,
+      message:
+        clearance.reason ??
+      "Registration submission blocked because you are not financially cleared.",
+    };
+  }
+
+ const registration = await prisma.courseRegistration.findUnique({
     where: { id: parsed.data.registrationId },
     include: {
       studentProfile: true,
@@ -35,6 +52,16 @@ export async function submitRegistrationAction(formData: FormData): Promise<void
 
   if (!validation.valid) {
     throw new Error(validation.errors[0] ?? "Registration validation failed.");
+  }
+
+  const financeValidation = await checkStudentRegistrationFinanceClearance(
+    registration.studentProfileId,
+  );
+
+  if (!financeValidation.cleared) {
+    throw new Error(
+      financeValidation.errors[0] ?? "Finance clearance validation failed.",
+    );
   }
 
   const updated = await prisma.courseRegistration.update({
@@ -52,7 +79,6 @@ export async function submitRegistrationAction(formData: FormData): Promise<void
   if (!carryoverValidation.valid) {
     throw new Error(carryoverValidation.errors[0] ?? "Carryover validation failed.");
   }
-
 
   await writeAuditLog({
     actorId: session.user.id,

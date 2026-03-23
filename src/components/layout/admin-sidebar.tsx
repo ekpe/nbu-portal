@@ -18,6 +18,8 @@ const links = [
   { href: "/admin/audit", label: "Audit Logs" },
   { href: "/admin/results/review-queue", label: "Result Review Queue" },
   { href: "/admin/results/amendments", label: "Result Amendments" },
+  { href: "/admin/finance/override-queue", label: "Finance Override Queue" },
+  { href: "/admin/finance", label: "Finance Dashboard" },
 ];
 
 export function AdminSidebar() {
