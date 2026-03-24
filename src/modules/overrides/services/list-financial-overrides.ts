@@ -1,10 +1,7 @@
 ﻿import { prisma } from "@/lib/db/prisma";
 
-export async function listPendingFinancialOverrides() {
+export async function listFinancialOverrides() {
   return prisma.financeOverrideRequest.findMany({
-    where: {
-      status: "PENDING",
-    },
     include: {
       financeAccount: true,
       studentProfile: {
@@ -16,7 +13,7 @@ export async function listPendingFinancialOverrides() {
       },
     },
     orderBy: {
-      createdAt: "asc",
+      createdAt: "desc",
     },
   });
 }

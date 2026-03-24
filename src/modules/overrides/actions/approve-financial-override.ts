@@ -1,47 +1,62 @@
 "use server";
 
+import { auth } from "@/auth";
 import { prisma } from "@/lib/db/prisma";
-import { reviewFinancialOverrideSchema } from "@/modules/overrides/validators/review-financial-override-schema";
-import { revalidatePath } from "next/cache";
-
-type ActionState =
-  | { success: true }
-  | { success: false; message: string };
+import { writeAuditLog } from "@/modules/audit/services/write-audit-log";
 
 export async function approveFinancialOverrideAction(
-  _prevState: ActionState | undefined,
-  formData: FormData
-): Promise<ActionState> {
-  const parsed = reviewFinancialOverrideSchema.safeParse({
-    overrideId: formData.get("overrideId"),
-  });
+  formData: FormData,
+): Promise<void> {
+  const session = await auth();
 
-  if (!parsed.success) {
-    return { success: false, message: "Invalid override approval request." };
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
   }
 
-  const override = await prisma.financialOverride.findUnique({
-    where: { id: parsed.data.overrideId },
+  const overrideId = String(formData.get("overrideId") ?? "").trim();
+
+  if (!overrideId) {
+    throw new Error("Override ID is required.");
+  }
+
+  const override = await prisma.financeOverrideRequest.findUnique({
+    where: { id: overrideId },
   });
 
   if (!override) {
-    return { success: false, message: "Override request not found." };
+    throw new Error("Finance override request not found.");
   }
 
   if (override.status !== "PENDING") {
-    return { success: false, message: "Only pending requests can be approved." };
+    throw new Error("Only pending override requests can be approved.");
   }
 
-  await prisma.financialOverride.update({
-    where: { id: override.id },
+  const updatedOverride = await prisma.financeOverrideRequest.update({
+    where: { id: overrideId },
     data: {
       status: "APPROVED",
+      approvedByUserId: session.user.id,
       approvedAt: new Date(),
     },
   });
 
-  revalidatePath("/admin/finance/overrides");
-  revalidatePath("/student/payments");
+  const updatedAccount = await prisma.studentFinanceAccount.update({
+    where: { id: override.studentFinanceAccountId },
+    data: {
+      isFinanciallyCleared: true,
+    },
+  });
 
-  return { success: true };
+  await writeAuditLog({
+    actorId: session.user.id,
+    action: "FINANCE_OVERRIDE_APPROVED",
+    entityType: "FINANCE_OVERRIDE_REQUEST",
+    entityId: updatedOverride.id,
+    summary: "Approved finance override request",
+    beforeJson: override,
+    afterJson: {
+      override: updatedOverride,
+      account: updatedAccount,
+    },
+  });
 }

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/auth";
 import { getCurrentStudentRegistrationContext } from "@/modules/registration/services/get-current-student-registration-context";
 import { writeAuditLog } from "@/modules/audit/services/write-audit-log";
-import { validateStudentFinancialClearance } from "@/modules/payments/services/validate-student-financial-clearance";
+import { checkStudentRegistrationFinanceClearance } from "@/modules/finance/services/check-student-registration-finance-clearance";
 
 export async function createRegistrationDraftAction(): Promise<void> {
   const session = await auth();
@@ -20,6 +20,16 @@ export async function createRegistrationDraftAction(): Promise<void> {
     throw new Error("Student registration context is incomplete.");
   }
 
+  const financeValidation = await checkStudentRegistrationFinanceClearance(
+    context.studentProfile.id,
+  );
+
+  if (!financeValidation.cleared) {
+    throw new Error(
+      financeValidation.errors[0] ?? "Finance clearance validation failed.",
+    );
+  }
+
   const existingDraft = await prisma.courseRegistration.findFirst({
     where: {
       studentProfileId: context.studentProfile.id,
@@ -31,21 +41,6 @@ export async function createRegistrationDraftAction(): Promise<void> {
 
   if (existingDraft) {
     redirect(`/student/registration/${existingDraft.id}`);
-  }
-
-  const clearance = await validateStudentFinancialClearance({
-    studentProfileId,
-    sessionId,
-    semesterId,
-  });
-
-  if (!clearance.allowed) {
-    return {
-      success: false,
-      message:
-        clearance.reason ??
-        "Registration blocked because you are not financially cleared.",
-    };
   }
 
   const registration = await prisma.courseRegistration.create({

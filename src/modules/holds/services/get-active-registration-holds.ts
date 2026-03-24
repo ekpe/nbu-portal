@@ -1,19 +1,19 @@
 import { prisma } from "@/lib/db/prisma";
 
 type Input = {
-  studentFeeProfileId: string;
+  studentProfileId: string;
 };
 
 export async function getActiveRegistrationHolds({
-  studentFeeProfileId,
+  studentProfileId,
 }: Input) {
-  return prisma.registrationHold.findMany({
+  return prisma.financeHold.findMany({
     where: {
-      studentFeeProfileId,
+      studentProfileId,
       isActive: true,
     },
     orderBy: {
-      createdAt: "desc",
+      placedAt: "desc",
     },
   });
 }

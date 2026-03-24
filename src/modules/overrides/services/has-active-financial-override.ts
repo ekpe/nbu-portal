@@ -1,41 +1,21 @@
-import { prisma } from "@/lib/db/prisma";
+﻿import { prisma } from "@/lib/db/prisma";
 
 type Input = {
-  studentFeeProfileId: string;
+  studentProfileId: string;
 };
 
 export async function hasActiveFinancialOverride({
-  studentFeeProfileId,
-}: Input) {
-  const now = new Date();
-
-  const override = await prisma.financialOverride.findFirst({
+  studentProfileId,
+}: Input): Promise<boolean> {
+  const override = await prisma.financeOverrideRequest.findFirst({
     where: {
-      studentFeeProfileId,
+      studentProfileId,
       status: "APPROVED",
-      OR: [
-        {
-          effectiveFrom: null,
-          expiresAt: null,
-        },
-        {
-          effectiveFrom: { lte: now },
-          expiresAt: null,
-        },
-        {
-          effectiveFrom: null,
-          expiresAt: { gte: now },
-        },
-        {
-          effectiveFrom: { lte: now },
-          expiresAt: { gte: now },
-        },
-      ],
     },
     orderBy: {
-      createdAt: "desc",
+      approvedAt: "desc",
     },
   });
 
-  return Boolean(override);
+  return !!override;
 }
